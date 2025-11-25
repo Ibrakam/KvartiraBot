@@ -92,10 +92,18 @@ async def send_apartment_notification(bot: Bot, user_id: int, apartment: Dict):
         # Получаем медиа-группу
         media_group = get_apartment_media_group(apartment)
 
-        if media_group:
-            # Отправляем с фото
+        if media_group and len(media_group) >= 2:
+            # Отправляем медиа-группу (2+ фото)
             media_group[0].caption = card_text
             await bot.send_media_group(chat_id=user_id, media=media_group)
+        elif media_group and len(media_group) == 1:
+            # Отправляем одно фото
+            await bot.send_photo(
+                chat_id=user_id,
+                photo=media_group[0].media,
+                caption=card_text,
+                parse_mode="HTML"
+            )
         else:
             # Отправляем только текст
             await bot.send_message(chat_id=user_id, text=card_text, parse_mode="HTML")

@@ -367,15 +367,12 @@ async def show_search_results(callback: CallbackQuery, state: FSMContext, filter
         # Получаем медиа-группу
         media_group = get_apartment_media_group(apartment)
 
-        if media_group:
-            # Если есть изображения, отправляем медиа-группу
+        if media_group and len(media_group) >= 2:
+            # Если есть 2+ изображения, отправляем медиа-группу
             try:
                 media_group[0].caption = card_text
 
-                # Логируем информацию о медиа-группе перед отправкой
                 print(f"[DEBUG] Квартира {idx+1}/{len(apartments)}: Отправка медиа-группы из {len(media_group)} изображений")
-                for i, media in enumerate(media_group):
-                    print(f"[DEBUG] Изображение {i+1}: {media.media}")
 
                 await callback.bot.send_media_group(
                     chat_id=callback.message.chat.id,
@@ -384,8 +381,24 @@ async def show_search_results(callback: CallbackQuery, state: FSMContext, filter
                 print(f"[DEBUG] Медиа-группа успешно отправлена")
 
             except Exception as e:
-                # Если ошибка при отправке медиа-группы, отправляем только текст
                 print(f"[ERROR] Ошибка при отправке медиа-группы для квартиры {apartment['id']}: {e}")
+                await callback.bot.send_message(
+                    chat_id=callback.message.chat.id,
+                    text=card_text,
+                    parse_mode="HTML"
+                )
+        elif media_group and len(media_group) == 1:
+            # Если только 1 фото, отправляем отдельным сообщением
+            try:
+                print(f"[DEBUG] Квартира {idx+1}/{len(apartments)}: Отправка 1 фото отдельно")
+                await callback.bot.send_photo(
+                    chat_id=callback.message.chat.id,
+                    photo=media_group[0].media,
+                    caption=card_text,
+                    parse_mode="HTML"
+                )
+            except Exception as e:
+                print(f"[ERROR] Ошибка при отправке фото для квартиры {apartment['id']}: {e}")
                 await callback.bot.send_message(
                     chat_id=callback.message.chat.id,
                     text=card_text,

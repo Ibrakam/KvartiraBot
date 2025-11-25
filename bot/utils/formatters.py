@@ -90,13 +90,13 @@ def format_apartment_card(apartment: Dict) -> str:
 def get_apartment_media_group(apartment: Dict, base_url: str = "") -> List[InputMediaPhoto]:
     """
     Создать медиа-группу с изображениями квартиры
-    
+
     Args:
         apartment: Словарь с данными квартиры
         base_url: Базовый URL сервера (например, http://localhost:8000) для относительных URL
-    
+
     Returns:
-        Список InputMediaPhoto (максимум 5)
+        Список InputMediaPhoto (максимум 10, т.к. Telegram поддерживает до 10 фото в медиа-группе)
     """
     media_group = []
     images = apartment.get('images', [])
@@ -107,8 +107,8 @@ def get_apartment_media_group(apartment: Dict, base_url: str = "") -> List[Input
         # Убираем /api из конца, если есть
         base_url = api_base_url.rstrip('/api').rstrip('/')
     
-    # Берем максимум 5 изображений
-    for img in images[:5]:
+    # Берем максимум 10 изображений (лимит Telegram для медиа-группы)
+    for img in images[:10]:
         image_url = img.get('image_url')
         
         # Логируем исходный URL для отладки

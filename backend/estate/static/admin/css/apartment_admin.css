@@ -1,0 +1,28 @@
+/* Стилизация поля множественной загрузки фотографий */
+.field-upload_images input[type="file"] {
+    padding: 10px;
+    border: 2px dashed #417690;
+    border-radius: 5px;
+    background-color: #f8f9fa;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.field-upload_images input[type="file"]:hover {
+    border-color: #2b5468;
+    background-color: #e9ecef;
+}
+
+.field-upload_images .helptext {
+    display: block;
+    margin-top: 5px;
+    color: #666;
+    font-size: 12px;
+}
+
+/* Превью изображений в инлайне */
+.inline-related .image_preview img {
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}

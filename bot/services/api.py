@@ -75,3 +75,4 @@ async def get_apartment_by_id(apartment_id: int) -> Optional[Dict]:
             print(f"Ошибка при запросе к API: {e}")
             return None
 
+

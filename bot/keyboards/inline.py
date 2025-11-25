@@ -10,7 +10,6 @@ def get_main_menu_keyboard():
     """Главное меню бота"""
     keyboard = [
         [InlineKeyboardButton(text="🏠 Выбор квартиры", callback_data="search_apartment")],
-        [InlineKeyboardButton(text="🔍 Поиск по ID", callback_data="search_by_id")],
         [InlineKeyboardButton(text="✉️ Подписаться на рассылку", callback_data="subscribe")],
         [InlineKeyboardButton(text="⛔ Отписаться от рассылки", callback_data="unsubscribe")],
         [InlineKeyboardButton(text="👤 Обо мне", callback_data="about")],
@@ -185,9 +184,10 @@ def get_price_keyboard(selected=None, any_selected: bool = False):
     """Клавиатура выбора ценового диапазона"""
     selected = selected or []
     prices = [
-        ("до 50 000 $", "0:50000"),
-        ("50-100 000 $", "50000:100000"),
-        ("100-200 000 $", "100000:200000"),
+        ("до 70 000 $", "0:70000"),
+        ("70-100 000 $", "70000:100000"),
+        ("100-150 000 $", "100000:150000"),
+        ("150-200 000 $", "150000:200000"),
         ("более 200 000 $", "200000:999999"),
     ]
     keyboard = []

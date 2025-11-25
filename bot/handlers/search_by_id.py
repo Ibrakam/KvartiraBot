@@ -55,9 +55,9 @@ async def process_id(message: Message, state: FSMContext):
     
     # Получаем медиа-группу
     media_group = get_apartment_media_group(apartment)
-    
-    if media_group:
-        # Если есть изображения, отправляем медиа-группу
+
+    if media_group and len(media_group) >= 2:
+        # Если есть 2+ изображения, отправляем медиа-группу
         try:
             media_group[0].caption = card_text
             await message.bot.send_media_group(
@@ -66,8 +66,20 @@ async def process_id(message: Message, state: FSMContext):
             )
             await message.answer("✅ Квартира найдена!", reply_markup=get_main_menu_keyboard())
         except Exception as e:
-            # Если ошибка при отправке медиа-группы, отправляем только текст
             print(f"Ошибка при отправке медиа-группы: {e}")
+            await message.answer(card_text, reply_markup=get_main_menu_keyboard())
+    elif media_group and len(media_group) == 1:
+        # Если только 1 фото, отправляем отдельным сообщением
+        try:
+            await message.bot.send_photo(
+                chat_id=message.chat.id,
+                photo=media_group[0].media,
+                caption=card_text,
+                parse_mode="HTML"
+            )
+            await message.answer("✅ Квартира найдена!", reply_markup=get_main_menu_keyboard())
+        except Exception as e:
+            print(f"Ошибка при отправке фото: {e}")
             await message.answer(card_text, reply_markup=get_main_menu_keyboard())
     else:
         # Если нет изображений, отправляем только текст

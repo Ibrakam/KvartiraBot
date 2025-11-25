@@ -7,6 +7,15 @@ class Apartment(models.Model):
         ('Вторичное жильё', 'Вторичное жильё'),
     ]
 
+    DISTRICT_CHOICES = [
+        ('Мирабадский', 'Мирабадский'),
+        ('Мирзо-Улугбекский', 'Мирзо-Улугбекский'),
+        ('Юнусабадский', 'Юнусабадский'),
+        ('Шайхантохурский', 'Шайхантохурский'),
+        ('Яккасарайский', 'Яккасарайский'),
+        ('Яшнабадский', 'Яшнабадский'),
+    ]
+
     CONDITION_CHOICES = [
         ('С ремонтом', 'С ремонтом'),
         ('Без ремонта', 'Без ремонта'),
@@ -14,7 +23,7 @@ class Apartment(models.Model):
     ]
 
     type = models.CharField(max_length=50, choices=TYPE_CHOICES, verbose_name='Тип')
-    district = models.CharField(max_length=100, verbose_name='Район')
+    district = models.CharField(max_length=100, choices=DISTRICT_CHOICES, verbose_name='Район')
     condition = models.CharField(max_length=50, choices=CONDITION_CHOICES, verbose_name='Состояние')
     area = models.FloatField(verbose_name='Площадь (м²)')
     rooms = models.IntegerField(verbose_name='Количество комнат')
@@ -50,6 +59,7 @@ class ApartmentImage(models.Model):
 
     def __str__(self):
         return f"Изображение {self.id} для квартиры {self.apartment.id}"
+
 
 
 
