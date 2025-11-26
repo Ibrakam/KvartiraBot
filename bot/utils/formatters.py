@@ -16,31 +16,59 @@ LOCAL_MEDIA_ROOT = Path(ENV_MEDIA_ROOT).expanduser() if ENV_MEDIA_ROOT else DEFA
 
 def _resolve_local_media_path(image_ref: str) -> Optional[Path]:
     """Пытается найти локальный файл для указанного пути/URL"""
+    print(f"  [RESOLVE] Попытка найти локальный файл для: '{image_ref}'")
+
     if not image_ref:
+        print(f"  [RESOLVE] ❌ image_ref пустой")
         return None
+
     image_ref = image_ref.strip()
     if not image_ref:
+        print(f"  [RESOLVE] ❌ image_ref пустой после strip")
         return None
+
+    # Сначала проверяем, не является ли это уже полным путём к файлу
     candidate = Path(image_ref)
+    print(f"  [RESOLVE] Проверка как абсолютный путь: {candidate}")
     if candidate.is_file():
+        print(f"  [RESOLVE] ✅ Найден как абсолютный путь: {candidate}")
         return candidate
+
+    # Парсим URL если это URL
     parsed = urlparse(image_ref)
+    print(f"  [RESOLVE] URL parsed - scheme: '{parsed.scheme}', hostname: '{parsed.hostname}', path: '{parsed.path}'")
+
     path_part = ''
     if parsed.scheme in ('http', 'https'):
         host = parsed.hostname or ''
         if host not in {'localhost', '127.0.0.1'}:
+            print(f"  [RESOLVE] ⚠️  Хост '{host}' не localhost, пропускаем")
             return None
         path_part = parsed.path or ''
     else:
         path_part = image_ref
+
     path_part = path_part.lstrip('/')
+    print(f"  [RESOLVE] path_part после lstrip('/'): '{path_part}'")
+
     if path_part.startswith('media/'):
         path_part = path_part[len('media/') :]
+        print(f"  [RESOLVE] Убрали префикс 'media/', осталось: '{path_part}'")
+
     if not path_part:
+        print(f"  [RESOLVE] ❌ path_part пустой после обработки")
         return None
+
     candidate = LOCAL_MEDIA_ROOT / path_part
+    print(f"  [RESOLVE] Финальный путь для проверки: {candidate}")
+    print(f"  [RESOLVE] Файл существует: {candidate.exists()}")
+    print(f"  [RESOLVE] Это файл: {candidate.is_file()}")
+
     if candidate.is_file():
+        print(f"  [RESOLVE] ✅ НАЙДЕН: {candidate}")
         return candidate
+
+    print(f"  [RESOLVE] ❌ Файл не найден")
     return None
 
 
@@ -98,8 +126,14 @@ def get_apartment_media_group(apartment: Dict, base_url: str = "") -> List[Input
     Returns:
         Список InputMediaPhoto (максимум 10, т.к. Telegram поддерживает до 10 фото в медиа-группе)
     """
+    print(f"\n{'='*80}")
+    print(f"[MEDIA_GROUP] Создание медиа-группы для квартиры ID: {apartment.get('id')}")
+    print(f"[MEDIA_GROUP] LOCAL_MEDIA_ROOT: {LOCAL_MEDIA_ROOT}")
+    print(f"{'='*80}\n")
+
     media_group = []
     images = apartment.get('images', [])
+    print(f"[MEDIA_GROUP] Всего изображений в квартире: {len(images)}")
     
     # Если base_url не передан, пытаемся получить из API_BASE_URL
     if not base_url:
@@ -108,76 +142,95 @@ def get_apartment_media_group(apartment: Dict, base_url: str = "") -> List[Input
         base_url = api_base_url.rstrip('/api').rstrip('/')
     
     # Берем максимум 10 изображений (лимит Telegram для медиа-группы)
-    for img in images[:10]:
+    for idx, img in enumerate(images[:10], 1):
+        print(f"\n[IMAGE {idx}] Обработка изображения {idx}/{min(len(images), 10)}")
+        print(f"[IMAGE {idx}] Полные данные изображения: {img}")
+
         image_url = img.get('image_url')
-        
-        # Логируем исходный URL для отладки
-        print(f"[DEBUG] Исходный image_url: {image_url}, тип: {type(image_url)}")
+        print(f"[IMAGE {idx}] Извлечённый image_url: '{image_url}'")
+        print(f"[IMAGE {idx}] Тип image_url: {type(image_url)}")
         
         # Пропускаем None, пустые строки и невалидные URL
         if not image_url or not isinstance(image_url, str):
-            print(f"[DEBUG] Пропущен: image_url пустой или не строка")
+            print(f"[IMAGE {idx}] ❌ ПРОПУЩЕНО: image_url пустой или не строка")
             continue
-        
+
         # Убираем пробелы
         image_url = image_url.strip()
         if not image_url:
-            print(f"[DEBUG] Пропущен: image_url пустой после strip")
+            print(f"[IMAGE {idx}] ❌ ПРОПУЩЕНО: image_url пустой после strip")
             continue
-        
-        print(f"[DEBUG] После strip: {image_url}")
+
+        print(f"[IMAGE {idx}] После strip: '{image_url}'")
 
         # Пытаемся найти и использовать локальный файл
+        print(f"[IMAGE {idx}] Попытка найти локальный файл...")
         local_file = _resolve_local_media_path(image_url)
+
         if local_file:
+            print(f"[IMAGE {idx}] ✅ Локальный файл найден: {local_file}")
+            print(f"[IMAGE {idx}] Файл существует: {local_file.exists()}")
+            print(f"[IMAGE {idx}] Размер файла: {local_file.stat().st_size if local_file.exists() else 'N/A'} байт")
             try:
                 media_group.append(InputMediaPhoto(media=FSInputFile(str(local_file))))
-                print(f"[DEBUG] Используем локальный файл: {local_file}")
+                print(f"[IMAGE {idx}] ✅ УСПЕШНО добавлено в медиа-группу как локальный файл")
                 continue
             except Exception as e:
-                print(f"[ERROR] Не удалось прикрепить локальный файл {local_file}: {e}")
+                print(f"[IMAGE {idx}] ❌ ОШИБКА при добавлении локального файла: {e}")
+        else:
+            print(f"[IMAGE {idx}] ⚠️  Локальный файл НЕ найден, попытка использовать URL")
         
         final_url = image_url
+        print(f"[IMAGE {idx}] Формирование финального URL...")
+        print(f"[IMAGE {idx}] base_url: '{base_url}'")
+
         # Если URL относительный (начинается с /), добавляем base_url
         if final_url.startswith('/') and base_url:
             final_url = base_url.rstrip('/') + final_url
-            print(f"[DEBUG] После добавления base_url: {final_url}")
+            print(f"[IMAGE {idx}] Добавлен base_url (относительный путь): '{final_url}'")
         elif not final_url.startswith(('http://', 'https://')) and base_url:
             if not final_url.startswith('http'):
                 final_url = base_url.rstrip('/') + '/' + final_url.lstrip('/')
-                print(f"[DEBUG] После добавления base_url (вариант 2): {final_url}")
+                print(f"[IMAGE {idx}] Добавлен base_url (вариант 2): '{final_url}'")
         
         # Проверяем, что URL валидный (начинается с http:// или https://)
         if not final_url.startswith(('http://', 'https://')):
-            print(f"[ERROR] Пропущен невалидный URL изображения: {final_url}")
+            print(f"[IMAGE {idx}] ❌ ОШИБКА: Невалидный URL (не начинается с http/https): '{final_url}'")
             continue
-        
+
         # Проверяем, что URL не содержит пробелов или других недопустимых символов
         if ' ' in final_url or '\n' in final_url or '\r' in final_url:
-            print(f"[ERROR] URL содержит недопустимые символы: {final_url}")
+            print(f"[IMAGE {idx}] ❌ ОШИБКА: URL содержит недопустимые символы: '{final_url}'")
             continue
-        
+
         # Проверяем, что URL не указывает на localhost (Telegram не может получить доступ)
         if 'localhost' in final_url or '127.0.0.1' in final_url:
-            print(f"[WARNING] URL указывает на localhost: {final_url}")
-            print(f"[WARNING] Telegram не может получить доступ к localhost. Пытаемся найти локальный файл...")
+            print(f"[IMAGE {idx}] ⚠️  WARNING: URL указывает на localhost: '{final_url}'")
+            print(f"[IMAGE {idx}] Telegram не может получить доступ к localhost. Попытка найти локальный файл...")
             # В последний раз пробуем найти локальный файл по нормализованному URL
             alt_local = _resolve_local_media_path(final_url)
             if alt_local:
+                print(f"[IMAGE {idx}] ✅ Найден локальный файл (fallback): {alt_local}")
                 try:
                     media_group.append(InputMediaPhoto(media=FSInputFile(str(alt_local))))
-                    print(f"[DEBUG] Используем локальный файл (fallback): {alt_local}")
+                    print(f"[IMAGE {idx}] ✅ УСПЕШНО добавлено через fallback")
                 except Exception as e:
-                    print(f"[ERROR] Не удалось прикрепить локальный файл {alt_local}: {e}")
+                    print(f"[IMAGE {idx}] ❌ ОШИБКА при добавлении через fallback: {e}")
+            else:
+                print(f"[IMAGE {idx}] ❌ Локальный файл не найден через fallback")
             continue
-        
-        print(f"[DEBUG] Финальный URL для отправки: {final_url}")
-        
+
+        print(f"[IMAGE {idx}] Финальный URL для отправки: '{final_url}'")
+
         try:
             media_group.append(InputMediaPhoto(media=final_url))
-            print(f"[DEBUG] Изображение успешно добавлено в медиа-группу")
+            print(f"[IMAGE {idx}] ✅ УСПЕШНО добавлено в медиа-группу как URL")
         except Exception as e:
-            print(f"[ERROR] Ошибка при добавлении изображения {final_url}: {e}")
+            print(f"[IMAGE {idx}] ❌ ОШИБКА при добавлении URL в медиа-группу: {e}")
             continue
-    
+
+    print(f"\n{'='*80}")
+    print(f"[MEDIA_GROUP] Итого добавлено изображений в медиа-группу: {len(media_group)}/{len(images)}")
+    print(f"{'='*80}\n")
+
     return media_group
