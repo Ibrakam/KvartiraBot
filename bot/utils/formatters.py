@@ -40,11 +40,9 @@ def _resolve_local_media_path(image_ref: str) -> Optional[Path]:
 
     path_part = ''
     if parsed.scheme in ('http', 'https'):
-        host = parsed.hostname or ''
-        if host not in {'localhost', '127.0.0.1'}:
-            print(f"  [RESOLVE] ⚠️  Хост '{host}' не localhost, пропускаем")
-            return None
+        # Для любого URL извлекаем путь (не только для localhost)
         path_part = parsed.path or ''
+        print(f"  [RESOLVE] Извлечён путь из URL: '{path_part}'")
     else:
         path_part = image_ref
 
