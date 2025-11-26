@@ -126,6 +126,8 @@ def get_apartment_media_group(apartment: Dict, base_url: str = "") -> List[Input
             continue
         
         print(f"[DEBUG] После strip: {image_url}")
+
+        # Пытаемся найти и использовать локальный файл
         local_file = _resolve_local_media_path(image_url)
         if local_file:
             try:
@@ -158,7 +160,7 @@ def get_apartment_media_group(apartment: Dict, base_url: str = "") -> List[Input
         # Проверяем, что URL не указывает на localhost (Telegram не может получить доступ)
         if 'localhost' in final_url or '127.0.0.1' in final_url:
             print(f"[WARNING] URL указывает на localhost: {final_url}")
-            print(f"[WARNING] Telegram не может получить доступ к localhost. Используйте ngrok или внешний хостинг.")
+            print(f"[WARNING] Telegram не может получить доступ к localhost. Пытаемся найти локальный файл...")
             # В последний раз пробуем найти локальный файл по нормализованному URL
             alt_local = _resolve_local_media_path(final_url)
             if alt_local:
